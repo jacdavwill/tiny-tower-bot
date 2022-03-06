@@ -7,18 +7,22 @@ mouse = Controller()
 playing = True
 
 # times
-continue_time = 0
+continue_time = time()
 elevator_time = 0
 stock_time = 0
+reset_time = time()
 
 # intervals (sec)
-CONTINUE_INT = 30
-ELEVATOR_INT = 10
-STOCK_INT = 60 * 1 # 1 minutes
+CONTINUE_INT = 60
+ELEVATOR_INT = 20
+STOCK_INT = 60 * 1 # 1 minute
+RESET_INT = 60 * 2 # 2 minutes
 
 # screen position
 screen_pos = "UNKNOWN"
 
+BUTTON_REGION = (0, 805 , 57, 60)  # left, top, width, height
+CANCEL_POS = (448, 869)
 
 def on_press(key):
     a=1
@@ -70,23 +74,57 @@ def check_continue(button="cont"):
     continue_time = time()
     REGION = (69, 309, 347, 323) # left, top, width, height
     try:
-        path = "./assets/continue_button.png"
-        if button == "yes":
+        path = "./assets/continue_button_2.png"
+        if button == "cont_parachute":
+            path = "./assets/continue_button.png"
+        elif button == "yes":
             path = "assets/yes_button.png"
         pos = pyautogui.locateCenterOnScreen(path, region=REGION)
         click(pos)
         continue_time = time()
-        # print("clicked continue")
+        print("clicked continue")
         return True
     except:
         return False
 
+# def check_reset():
+
+
 def check_elevator():
-    print("checking elevator")
-    pass
+    # TODO: testing
+    # tested with new pet
+    # tested with new resident
+    #
+    # test with new pet and costume
+    # test with new costume
+    global elevator_time, playing, screen_pos
+    elevator_time = time() # to cover the except branch
+    try:
+        path = "./assets/elevator_button.png"
+        pos = pyautogui.locateCenterOnScreen(path, region=BUTTON_REGION)
+        go_to_bottom()
+        click(pos)
+        sleep(.5)
+        mouse.position = (175, 742)
+        mouse.press(Button.left)
+        arrived = False
+        while not arrived and playing:
+            arrived = is_close_to((255,0,0), get_pix_color((69,350)), 20)
+        mouse.position = (175, 742)
+        mouse.release(Button.left)
+        screen_pos = "UNKNOWN"
+        sleep(4)
+        check_continue()
+        sleep(.5)
+        check_continue()
+        elevator_time = time()
+        # print("clicked elevator")
+        return True
+    except:
+        return False
 
 def check_stock():
-    # print("checking stock")
+    print("checking stock")
     global stock_time
     stock_time = time()
     STOCK_ALL_POS = (217, 766)
@@ -98,7 +136,7 @@ def check_stock():
         click(STOCK_ALL_POS)
         if check_continue(button="yes"):
             print(time(), "RE-STOCK")
-        sleep(.25)
+        sleep(.5)
         check_continue() # to catch full stock bonus msg
 
 def check_parachute():
@@ -111,8 +149,28 @@ def check_parachute():
     pixel_color = get_pix_color(PARACHUTE_POS)
     if not is_close_to(pixel_color, sky_color, TOLERANCE):
         click(PARACHUTE_POS)
-        if check_continue():
+        if check_continue(button="cont_parachute"):
             print(time(), "CATCH PARACHUTE")
+
+def check_sell_stock():
+    return False
+
+def check_VIP():
+    try:
+        path = "assets/vip_button.png"
+        pos = pyautogui.locateCenterOnScreen(path, region=BUTTON_REGION)
+        click(pos)
+        sleep(.5)
+        click(CANCEL_POS)
+        return True
+    except:
+        return False
+
+def check_buttons():
+    # print("checking buttons")
+    found_button = True
+    while found_button:
+        found_button = check_elevator() or check_sell_stock() or check_VIP()
 
 def play():
     global continue_time, stock_time
@@ -123,13 +181,17 @@ def play():
     while playing:
         t = time()
         sleep(.25)
+
         if t - continue_time > CONTINUE_INT:
             check_continue()
-        # if t - elevator_time > ELEVATOR_INT:
-        #     pass
         if t - stock_time > STOCK_INT:
             check_stock()
+        if t - elevator_time > ELEVATOR_INT:
+            check_buttons()
+
         check_parachute()
+
+        # sleep(1)
         # print('Mouse: {0}, Color: {1}'.format(mouse.position, pyautogui.pixel(*mouse.position)))
 
 play()
