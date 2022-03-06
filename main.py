@@ -9,7 +9,7 @@ playing = True
 # times
 continue_time = 0
 elevator_time = 0
-stock_time = time()
+stock_time = 0
 
 # intervals (sec)
 CONTINUE_INT = 30
@@ -45,6 +45,8 @@ def go_to_top():
     if screen_pos != "TOP":
         screen_pos = "TOP"
         click((24, 53))
+        sleep(1)
+        mouse.scroll(0, 2)
         sleep(1)
 
 def is_close_to(target, sample, tolerance):
@@ -121,13 +123,13 @@ def play():
     while playing:
         t = time()
         sleep(.25)
-        check_parachute()
         if t - continue_time > CONTINUE_INT:
             check_continue()
         # if t - elevator_time > ELEVATOR_INT:
         #     pass
         if t - stock_time > STOCK_INT:
             check_stock()
+        check_parachute()
         # print('Mouse: {0}, Color: {1}'.format(mouse.position, pyautogui.pixel(*mouse.position)))
 
 play()
